@@ -1,0 +1,44 @@
+pipeline{
+    agent {
+        node {
+            label "java_slave"
+        }
+    }
+    environment {
+        PATH = "/opt/maven/bin:$PATH"
+    }
+    stages {
+        stage('build') {
+            steps{
+                echo "------------ build started ---------"
+                sh 'mvn clean deploy'
+                echo "------------ build completed ---------"
+        }
+      }
+        stage("Code analysis"){
+            environment{
+                scannerHome = tool "Valaxy_SonarQube_Scanner"
+            }
+            steps{
+                echo '<--------------- Sonar Analysis started  --------------->'
+                withSonarQubeEnv('Valaxy_SonarQube_Server'){
+                     sh "${scannerHome}/bin/sonar-scanner"
+                }
+            }
+        }
+        stage("quality gate"){
+            steps{
+                script {
+                echo '<--------------- Sonar Gate Analysis Started --------------->'
+                timeout(time: 1, unit: 'HOURS'){ 
+                def qg = waitForQualityGate()
+                if(qg.status !='OK') {
+                    error "Pipeline failed due to quality gate failures: ${qg.status}"
+                }
+                }
+                echo '<--------------- Sonar Gate Analysis Ends --------------->'
+            }
+            }
+        }
+        }
+    }
