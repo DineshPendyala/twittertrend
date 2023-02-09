@@ -11,7 +11,7 @@ pipeline{
         stage('build') {
             steps{
                 echo "------------ build started ---------"
-                sh 'mvn clean deploy'
+                sh '/opt/maven/apache-maven-3.9.0/bin/mvn clean deploy'
                 echo "------------ build completed ---------"
         }
       }
